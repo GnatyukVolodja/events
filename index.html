@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>events</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+</head>
+
+<body>
+
+<div id="app">
+    <div class="container my-3">
+        <forms :tasks="tasks"></forms>
+        <item v-for="(task, index) in tasks" :task="task" :index="index" :key="index" v-on:itemdelete="remove"></item>
+    </div>
+</div>
+
+<script src="https://unpkg.com/vue"></script>
+
+<script>
+
+
+  Vue.component('forms', {
+    props: ['tasks'],
+    data: function () {
+      return {
+        addTask: { name: 'Напоминание:', date: '12.15.2020 18:00:00', res: '' }
+      }
+    },
+    template: `
+      <div class="row">
+      <div class="form-group col-4">
+        <input v-model="addTask.name" class="form-control" type="text" placeholder="Событие">
+      </div>
+      <div class="form-group col-4">
+        <input v-model="addTask.date" class="form-control" type="text" placeholder="мм, чч, гггг чч:мм:сс">
+      </div>
+      <div class="form-group col-4">
+        <input @click="eventAdd" class="btn btn-secondary w-100" type="button" value="Добавить событие">
+      </div>
+      </div>`,
+    methods: {
+      eventAdd: function () {
+        this.tasks.push({ name: this.addTask.name, date: this.addTask.date, res: this.addTask.res })
+      }
+    }
+  })
+
+  Vue.component('item', {
+    props: ['task', 'index'],
+    template: `
+      <div class="alert d-flex align-items-center justify-content-between row my-3" :data-id="task.res"
+           :class="[task.res === '0д 0ч 0м 0с ' ? 'alert-danger' : 'alert-info']">
+      <span class="col-3"><b>{{ task.name }}</b></span>
+      <span class="col-3"><b>{{ task.date }}</b></span>
+      <span class="col-3"><b>{{ task.res }}</b></span>
+      <span class="col-3"><button class="btn btn-success" v-on:click="itemDelete(index)">Удалить</button></span>
+      </div>`,
+    methods: {
+      itemDelete: function (index) {
+        this.$emit('itemdelete', index)
+      }
+    }
+  })
+
+  new Vue({
+    el: '#app',
+    data: {
+      tasks: [],
+      interval: []
+    },
+    methods: {
+      remove: function (index) {
+        this.tasks.splice(index, 1)
+      }
+    },
+    watch: {
+      tasks: function () {
+        this.interval.push(setInterval(() => {
+          for (let i = 0; i < this.tasks.length; i++) {
+            let countDownDate = new Date(this.tasks[i].date)
+            let now = new Date().getTime()
+            let distance = countDownDate - now
+            if (distance < 0) {
+              distance = 0
+              clearInterval(this.interval[i])
+            }
+            let days = Math.floor(distance / (1000 * 60 * 60 * 24))
+            let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+            let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
+            let seconds = Math.floor((distance % (1000 * 60)) / 1000)
+            this.tasks[i].res = days + 'д ' + hours + 'ч ' + minutes + 'м ' + seconds + 'с '
+          }
+        }, 1000))
+        return this.tasks
+      }
+    }
+  })
+</script>
+</body>
+</html>
